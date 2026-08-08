@@ -1,4 +1,4 @@
-package com.example.backend.repository;
+package com.example.backend.graphrepository;
 
 import com.example.backend.node.GraphOrder;
 import org.springframework.data.neo4j.repository.Neo4jRepository;

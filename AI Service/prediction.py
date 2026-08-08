@@ -107,18 +107,14 @@ def predict_transaction(transaction):
     else:
         action = "Approve"
 
+    # Convert the SHAP explanation list to a single comma-separated string for Java compatibility
+    explanation_str = ", ".join([f"{item['feature']} ({item['impact']:.2f})" for item in explanation])
+
     return {
-
-        "fraud_probability": round(fraud_probability * 100, 2),
-
-        "anomaly": anomaly,
-
-        "collusion": collusion,
-
-        "action": action,
-
-        "explanation": explanation
-
+        "riskScore": round(fraud_probability * 100, 2),
+        "riskLevel": anomaly,
+        "decision": action,
+        "explanation": explanation_str
     }
 
 

@@ -25,7 +25,7 @@ public class FraudDetectionService {
     private final UserRepository userRepository;
     private final RestTemplate restTemplate = new RestTemplate();
 
-    @Value("${ai.service.url:http://localhost:5000/predict}")
+    @Value("${ai.service.url:http://10.142.0.145:8000/predict}")
     private String aiServiceUrl;
 
     public FraudDetectionService(FraudCaseRepository fraudCaseRepository, UserRepository userRepository) {
@@ -70,7 +70,7 @@ public class FraudDetectionService {
                         .riskScore(response.getRiskScore())
                         .riskLevel(response.getRiskLevel())
                         .decision(response.getDecision())
-                        .explanation(response.getExplanation())
+                        .explanation(response.getExplanation() != null ? response.getExplanation().toString() : "No explanation provided")
                         .build();
 
                 fraudCaseRepository.save(fraudCase);

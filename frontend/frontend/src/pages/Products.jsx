@@ -1,11 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { productService } from '../services/productService';
+import { orderService } from '../services/orderService';
 import Navbar from '../components/Navbar';
-import { ShoppingBag } from 'lucide-react';
+import { ShoppingBag, ShoppingCart } from 'lucide-react';
+import { AuthContext } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const Products = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [actionLoading, setActionLoading] = useState(null);
+    const { user } = useContext(AuthContext);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -22,6 +28,33 @@ const Products = () => {
         };
         fetchProducts();
     }, []);
+
+    const handleBuy = async (productId) => {
+        if (!user) {
+            alert("Please login to buy products");
+            return;
+        }
+        setActionLoading(productId);
+        try {
+            const orderData = {
+                productId: productId,
+                deviceId: navigator.userAgent.substring(0, 255), // Simple mock device ID
+                ipAddress: "127.0.0.1" // Mock IP for hackathon
+            };
+            const res = await orderService.createOrder(orderData);
+            if (res.status) {
+                alert("Order placed successfully!");
+                navigate('/dashboard'); // redirect to dashboard to see the order
+            } else {
+                alert(res.message || "Failed to place order");
+            }
+        } catch (err) {
+            console.error(err);
+            alert(err.response?.data?.message || "An error occurred while placing the order.");
+        } finally {
+            setActionLoading(null);
+        }
+    };
 
     if (loading) return <div className="loading-screen">Loading Catalog...</div>;
 
@@ -49,7 +82,7 @@ const Products = () => {
                                 <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem', flex: 1 }}>
                                     {product.description}
                                 </p>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                                     <span style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--primary-color)' }}>
                                         ${product.price.toFixed(2)}
                                     </span>
@@ -57,9 +90,21 @@ const Products = () => {
                                         Stock: {product.stockQuantity}
                                     </span>
                                 </div>
-                                <div style={{ marginTop: '1rem', fontSize: '0.85rem', color: 'var(--text-muted)', borderTop: '1px solid var(--border-color)', paddingTop: '0.5rem' }}>
+                                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', borderTop: '1px solid var(--border-color)', paddingTop: '0.5rem', marginBottom: '1rem' }}>
                                     Sold by: {product.sellerName}
                                 </div>
+                                
+                                {user?.role === 'CUSTOMER' && (
+                                    <button 
+                                        className="btn-primary" 
+                                        style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}
+                                        onClick={() => handleBuy(product.id)}
+                                        disabled={actionLoading === product.id || product.stockQuantity === 0}
+                                    >
+                                        <ShoppingCart size={18} />
+                                        {actionLoading === product.id ? 'Processing...' : product.stockQuantity === 0 ? 'Out of Stock' : 'Buy Now'}
+                                    </button>
+                                )}
                             </div>
                         ))}
                     </div>
